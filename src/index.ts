@@ -26,6 +26,40 @@ module framework {
     }
   }
 
+  export class cKeyboardInput {
+    public keyCallback: { [keycode: number]: () => void; } = {};
+    public keyDown: { [keycode: number]: boolean; } = {};
+
+    constructor() {
+      document.addEventListener('keydown', this.keyboardDown);
+      document.addEventListener('keyup', this.keyboardUp);
+    }
+    public keyboardDown = (event: KeyboardEvent): void => {
+      event.preventDefault();
+      this.keyDown[event.keyCode] = true;
+    }
+    public keyboardUp = (event: KeyboardEvent): void => {
+      this.keyDown[event.keyCode] = false;
+    }
+
+    public addKeycodeCallback = (keycode: number, f: () => void): void => {
+      this.keyCallback[keycode] = f;
+      this.keyDown[keycode] = false;
+    }
+
+    public inputLoop = (): void => {
+      for (var key in this.keyDown) {
+        var is_down: boolean = this.keyDown[key];
+        if (is_down) {
+          var callback: () => void = this.keyCallback[key];
+          if (callback != null) {
+            callback();
+          }
+        }
+      }
+    }
+  }
+
   export class Game {
     public readonly N: number = 4;
     public grid: number[][] = [];
@@ -38,11 +72,16 @@ module framework {
         this.grid.push(row);
       }
     }
+
+    public update = (dir: number): void => { 
+      console.log(dir);
+    }
   }
 }
 
 module visualizer {
   class Visualizer {
+    private keyInput: framework.cKeyboardInput;
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
     private scoreInput: HTMLInputElement;
@@ -61,6 +100,9 @@ module visualizer {
       this.canvas.width = size;  // pixels
       this.ctx = this.canvas.getContext('2d')!;
       this.scoreInput = <HTMLInputElement>document.getElementById("scoreInput");
+      this.keyInput = new framework.cKeyboardInput();
+      // press down arrow
+      this.keyInput.addKeycodeCallback(40, () => this.game.update(1));
     }
 
     public draw() {
@@ -68,16 +110,23 @@ module visualizer {
 
       const W = this.canvas.width / this.game.N;
       const H = this.canvas.height / this.game.N;
-      // this.ctx.font = `${(lenH - 1)/2}px monospace`;
+      this.ctx.font = `${H/2}px monospace`;
+      this.ctx.textAlign = 'center';
       this.ctx.lineWidth = 1;
       for (let i = 0; i < this.game.N; i++) {
-        const x = i*W;
+        const x = i * W;
         for (let j = 0; j < this.game.N; j++) {
-          const y = j*H;
-          this.ctx.fillStyle = Visualizer.colors[(i*this.game.N+j)%11];
+          const y = j * H;
+          this.ctx.fillStyle = Visualizer.colors[(i * this.game.N + j) % 11];
           this.ctx.fillRect(x, y, W, H);
+          this.ctx.fillText(String(this.game.grid[i][j]), x-W/2, y-H/4);
         }
       }
+    }
+
+    public loop = () => {
+      requestAnimationFrame(this.loop);
+      this.keyInput.inputLoop();
     }
 
     public getCanvas(): HTMLCanvasElement {
@@ -91,6 +140,7 @@ module visualizer {
     constructor() {
       this.visualizer = new Visualizer();
       this.visualizer.draw();
+      this.visualizer.loop();
     }
   }
 }
