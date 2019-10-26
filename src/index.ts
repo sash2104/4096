@@ -181,6 +181,7 @@ module framework {
 
 module visualizer {
   class Visualizer {
+    private updatedTime: number;
     private keyInput: framework.cKeyboardInput;
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
@@ -231,6 +232,8 @@ module visualizer {
       this.keyInput.addKeycodeCallback(38, () => this.game.update(1));
       this.keyInput.addKeycodeCallback(39, () => this.game.update(2));
       this.keyInput.addKeycodeCallback(40, () => this.game.update(3));
+
+      this.updatedTime = new Date().getTime();
     }
 
     public draw() {
@@ -265,8 +268,13 @@ module visualizer {
         console.log("GAME OVER");
         return;
       }
-      requestAnimationFrame(this.loop);
       this.keyInput.inputLoop();
+      let now = new Date().getTime();
+      while (now - this.updatedTime < 80) {
+        now = new Date().getTime();
+      }
+      this.updatedTime = now;
+      requestAnimationFrame(this.loop);
       this.draw();
     }
 
