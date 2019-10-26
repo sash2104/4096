@@ -1,5 +1,7 @@
 declare var GIF: any;  // for https://github.com/jnordberg/gif.js
 
+const EMPTY: number = 0;
+
 module framework {
   export class Random {
     private x: number;
@@ -61,7 +63,6 @@ module framework {
     }
   }
 
-  const EMPTY: number = 0;
   export class Game {
     public readonly N: number = 4;
     public grid: number[][] = [];
@@ -185,11 +186,36 @@ module visualizer {
     private ctx: CanvasRenderingContext2D;
     private scoreInput: HTMLInputElement;
     private game: framework.Game;
-    static colors = [
-      '#ffffff', '#e1f5fe', '#b3e5fc', '#81d4fa', '#4fc3f7',
-      '#29b6f6', '#03a9f4', '#039be5', '#0288d1', '#0277bd',
-      '#01579b',
-    ];
+    static background: { [value: number]: string; } = {
+      0: "#cdc1b4",
+      2: "#eee4da",
+      4: "#ede0c8",
+      8: "#f2b179",
+      16: "#f59563",
+      32: "#f67c5f",
+      64: "#f65e3b",
+      128: "#edcf72",
+      256: "#edcc61",
+      512: "#edc850",
+      1024: "#edc53f",
+      2048: "#edc22e",
+      4096: "#edc22e",
+    };
+    static color: { [value: number]: string; } = {
+      0: "#776e65",
+      2: "#776e65",
+      4: "#776e65",
+      8: "#f9f6f2",
+      16: "#f9f6f2",
+      32: "#f9f6f2",
+      64: "#f9f6f2",
+      128: "#f9f6f2",
+      256: "#f9f6f2",
+      512: "#f9f6f2",
+      1024: "#f59563",
+      2048: "#f67c5f",
+      4096: "#f65e3b",
+    };
 
     constructor() {
       this.game = new framework.Game();
@@ -210,19 +236,26 @@ module visualizer {
     public draw() {
       this.scoreInput.value = String(this.game.score);
 
+      this.ctx.fillStyle = "#bbada0"
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
       const W = this.canvas.width / this.game.N;
       const H = this.canvas.height / this.game.N;
-      this.ctx.font = `${H/2}px monospace`;
+      const MARGIN = 4;
+      const W2 = W-MARGIN*2;
+      const H2 = H-MARGIN*2;
+      this.ctx.font = `${H2/2}px monospace`;
       this.ctx.textAlign = 'center';
-      this.ctx.lineWidth = 1;
       for (let i = 0; i < this.game.N; i++) {
-        const x = i * W;
+        const x = i * W + MARGIN;
         for (let j = 0; j < this.game.N; j++) {
-          const y = j * H;
-          this.ctx.fillStyle = Visualizer.colors[(i * this.game.N + j) % 11];
-          this.ctx.fillRect(x, y, W, H);
-          this.ctx.fillStyle = Visualizer.colors[(i * this.game.N + j+3) % 11];
-          this.ctx.fillText(String(this.game.grid[j][i]), x+W/2, y+3*H/4);
+          const y = j * H + MARGIN;
+          const value = this.game.grid[j][i];
+          this.ctx.fillStyle = Visualizer.background[value];
+          this.ctx.fillRect(x, y, W2, H2);
+          if (value != EMPTY) {
+            this.ctx.fillStyle = Visualizer.color[value];
+            this.ctx.fillText(String(this.game.grid[j][i]), x+W2/2, y+3*H2/4);
+          }
         }
       }
     }
